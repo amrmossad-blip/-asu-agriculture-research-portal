@@ -1,0 +1,18 @@
+خطوات الرفع من iPhone إلى GitHub:
+
+1) فك ضغط ملف ZIP في تطبيق Files.
+2) افتح المستودع:
+   https://github.com/amrmossad-blip/-asu-agriculture-research-portal
+3) اختر Add file ثم Upload files.
+4) ارفع محتويات المجلد نفسها إلى جذر المستودع:
+   index.html
+   config.js
+   render.yaml
+   README.md
+   .gitignore
+   UPLOAD_TO_GITHUB_AR.txt
+5) اكتب Commit message مثل:
+   Deploy ASU Agriculture Research Portal frontend
+6) اضغط Commit changes.
+
+مهم: لا ترفع ملف ZIP نفسه فقط؛ يجب أن تكون index.html و config.js في جذر المستودع.
