@@ -36,53 +36,68 @@ h1,h2,h3{margin:.25em 0}
 
   <div id="loginCard" class="card">
     <h2>الدخول إلى المنصة</h2>
-    <p class="muted">أدخل البريد الجامعي وكود الدخول الخاص بك.</p>
-    <div class="grid">
-      <div><label>البريد الجامعي</label><input id="email" type="email" placeholder="name@agr.asu.edu.eg" class="ltr"></div>
-      <div><label>كود الدخول</label><input id="code" type="password" class="ltr"></div>
+    <p class="muted">أدخل بريدك الرسمي بكلية الزراعة. سيتم إرسال رمز تحقق لمرة واحدة إلى البريد.</p>
+
+    <div id="emailStep">
+      <label>البريد الرسمي</label>
+      <input id="accessEmail" type="email" placeholder="name@agr.asu.edu.eg" class="ltr">
+      <button id="sendAccessCode" style="margin-top:12px">إرسال رمز التحقق</button>
+      <div id="accessEmailMsg" class="small"></div>
     </div>
-    <button id="loginBtn" style="margin-top:12px">دخول</button>
-    <div id="loginMsg" class="small"></div>
-    <div class="actions" style="margin-top:12px">
-      <button id="openRegistration" class="secondary">اسمي غير موجود في قاعدة البيانات</button>
+
+    <div id="otpStep" class="hidden" style="margin-top:16px">
+      <label>رمز التحقق المرسل إلى البريد</label>
+      <input id="accessOtp" inputmode="numeric" maxlength="6" placeholder="000000" class="ltr">
+      <div class="actions">
+        <button id="verifyAccessCode">دخول</button>
+        <button id="resendAccessCode" class="secondary">إعادة إرسال الرمز</button>
+      </div>
+      <div id="accessOtpMsg" class="small"></div>
     </div>
-    <div class="small muted" style="margin-top:8px">التسجيل الجديد متاح فقط ببريد ينتهي بـ @agr.asu.edu.eg.</div>
+
+    <div class="small muted" style="margin-top:12px">
+      يسمح بالدخول فقط باستخدام بريد كلية الزراعة الرسمي المنتهي بـ @agr.asu.edu.eg.
+    </div>
   </div>
 
   <div id="registrationCard" class="card hidden">
-    <div class="top">
-      <div><h2>طلب إضافة باحث جديد</h2><p class="muted">تحقق أولًا من ملكية بريد كلية الزراعة الرسمي.</p></div>
-      <button id="closeRegistration" class="secondary">عودة</button>
+    <h2>استكمال بياناتك</h2>
+    <div class="notice warning">
+      <b>تم التحقق من بريدك الرسمي، ولكن لا يوجد ملف مرتبط به حاليًا.</b>
+      <div class="small">يرجى استكمال البيانات التالية وإرسالها للإدارة للمراجعة والاعتماد.</div>
     </div>
-    <div id="regStep1">
-      <label>البريد الرسمي</label>
-      <input id="regEmail" type="email" placeholder="name@agr.asu.edu.eg" class="ltr">
-      <button id="sendRegCode" style="margin-top:10px">إرسال رمز التحقق</button>
-      <div id="regEmailMsg" class="small"></div>
+    <div style="margin-top:12px">
+      <label>البريد الرسمي المتحقق منه</label>
+      <input id="regEmail" type="email" class="ltr" disabled>
     </div>
-    <div id="regStep2" class="hidden">
-      <label>رمز التحقق</label>
-      <input id="regOtp" inputmode="numeric" maxlength="6" placeholder="000000" class="ltr">
-      <button id="verifyRegCode" style="margin-top:10px">تحقق من البريد</button>
-      <div id="regOtpMsg" class="small"></div>
-    </div>
-    <div id="regStep3" class="hidden">
-      <div class="notice success"><b>تم التحقق من البريد الرسمي.</b> أكمل البيانات وأرسل الطلب للإدارة.</div>
-      <div class="grid" style="margin-top:12px">
-        <div><label>الاسم بالعربية *</label><input id="regNameAr"></div>
-        <div><label>الاسم بالإنجليزية</label><input id="regNameEn" class="ltr"></div>
-        <div><label>القسم *</label><input id="regDept"></div>
-        <div><label>الفئة *</label><select id="regCategory" style="width:100%;padding:11px;border:1px solid #bfd0c5;border-radius:9px"><option value="Faculty Member">عضو هيئة تدريس</option><option value="Teaching Assistant Staff">هيئة معاونة</option></select></div>
-        <div><label>الدرجة العلمية/الوظيفية *</label><input id="regRank" placeholder="أستاذ / أستاذ مساعد / مدرس / مدرس مساعد / معيد"></div>
-        <div><label>ORCID</label><input id="regOrcid" class="ltr"></div>
-        <div><label>Scopus Author ID</label><input id="regScopus" class="ltr"></div>
-        <div><label>Web of Science ResearcherID</label><input id="regWos" class="ltr"></div>
-        <div><label>Google Scholar</label><input id="regScholar" class="ltr"></div>
+    <div class="grid" style="margin-top:12px">
+      <div><label>الاسم بالعربية *</label><input id="regNameAr"></div>
+      <div><label>الاسم بالإنجليزية</label><input id="regNameEn" class="ltr"></div>
+      <div><label>القسم *</label><input id="regDept"></div>
+      <div><label>الفئة *</label>
+        <select id="regCategory" style="width:100%;padding:11px;border:1px solid #bfd0c5;border-radius:9px">
+          <option value="Faculty Member">عضو هيئة تدريس</option>
+          <option value="Teaching Assistant Staff">هيئة معاونة</option>
+        </select>
       </div>
-      <label>ملاحظات</label><textarea id="regNotes" rows="3"></textarea>
-      <button id="submitRegistration" style="margin-top:10px">إرسال طلب التسجيل للإدارة</button>
-      <div id="regSubmitMsg" class="small"></div>
+      <div><label>الدرجة العلمية / الوظيفية *</label><input id="regRank" placeholder="أستاذ / أستاذ مساعد / مدرس / مدرس مساعد / معيد"></div>
+      <div><label>ORCID</label><input id="regOrcid" class="ltr"></div>
+      <div><label>Scopus Author ID</label><input id="regScopus" class="ltr"></div>
+      <div><label>Web of Science ResearcherID</label><input id="regWos" class="ltr"></div>
+      <div><label>Google Scholar Profile / ID</label><input id="regScholar" class="ltr"></div>
     </div>
+    <label>ملاحظات</label>
+    <textarea id="regNotes" rows="3"></textarea>
+    <button id="submitRegistration" style="margin-top:10px">إرسال طلب التسجيل للإدارة</button>
+    <div id="regSubmitMsg" class="small"></div>
+  </div>
+
+  <div id="pendingRegistrationCard" class="card hidden">
+    <h2>طلب التسجيل قيد المراجعة</h2>
+    <div class="notice warning">
+      تم التحقق من بريدك الرسمي، ويوجد بالفعل طلب تسجيل مرتبط بهذا البريد في انتظار مراجعة الإدارة.
+    </div>
+    <div id="pendingRequestInfo" class="small muted" style="margin-top:10px"></div>
   </div>
 
   <div id="app" class="hidden">
@@ -268,45 +283,106 @@ function renderPubs(rows){
 }
 
 let registrationVerificationToken='';
-function isFacultyEmail(v){return /^[a-z0-9._%+-]+@agr\.asu\.edu\.eg$/i.test(String(v||'').trim())}
+let verifiedAccessEmail='';
+
+function isFacultyEmail(v){
+  return /^[a-z0-9._%+-]+@agr\.asu\.edu\.eg$/i.test(String(v||'').trim());
+}
 async function publicCall(url,data){
   const r=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});
-  const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||'Request failed'); return j;
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.error||'Request failed');
+  return j;
 }
-document.querySelector('#openRegistration').onclick=()=>{document.querySelector('#loginCard').classList.add('hidden');document.querySelector('#registrationCard').classList.remove('hidden')};
-document.querySelector('#closeRegistration').onclick=()=>{document.querySelector('#registrationCard').classList.add('hidden');document.querySelector('#loginCard').classList.remove('hidden')};
-document.querySelector('#sendRegCode').onclick=async()=>{
-  const email=document.querySelector('#regEmail').value.trim().toLowerCase(),m=document.querySelector('#regEmailMsg');m.textContent='';
-  if(!isFacultyEmail(email)){m.textContent='يجب استخدام بريد رسمي ينتهي بـ @agr.asu.edu.eg';m.style.color='#a32d2d';return}
-  try{await publicCall(EMAIL_API,{action:'request_code',purpose:'registration',email});m.textContent='تم إرسال رمز تحقق إلى بريدك الرسمي.';m.style.color='#146c43';document.querySelector('#regStep2').classList.remove('hidden')}
-  catch(e){m.textContent=e.message;m.style.color='#a32d2d'}
-};
-document.querySelector('#verifyRegCode').onclick=async()=>{
-  const email=document.querySelector('#regEmail').value.trim().toLowerCase(),code=document.querySelector('#regOtp').value.trim(),m=document.querySelector('#regOtpMsg');m.textContent='';
-  try{const d=await publicCall(EMAIL_API,{action:'verify_code',purpose:'registration',email,code});registrationVerificationToken=d.verification_token;m.textContent='تم التحقق من البريد بنجاح.';m.style.color='#146c43';document.querySelector('#regStep3').classList.remove('hidden');document.querySelector('#regEmail').disabled=true;document.querySelector('#regOtp').disabled=true}
-  catch(e){m.textContent=e.message;m.style.color='#a32d2d'}
-};
-document.querySelector('#submitRegistration').onclick=async()=>{
-  const email=document.querySelector('#regEmail').value.trim().toLowerCase(),m=document.querySelector('#regSubmitMsg');m.textContent='';
-  if(!registrationVerificationToken){m.textContent='يجب التحقق من البريد الرسمي أولًا.';m.style.color='#a32d2d';return}
+async function sendAccessOtp(){
+  const email=document.querySelector('#accessEmail').value.trim().toLowerCase();
+  const m=document.querySelector('#accessEmailMsg'); m.textContent='';
+  if(!isFacultyEmail(email)){
+    m.textContent='يجب استخدام البريد الرسمي المنتهي بـ @agr.asu.edu.eg';
+    m.style.color='#a32d2d'; return;
+  }
   try{
-    const d=await publicCall(REG_API,{action:'submit_registration',verification_token:registrationVerificationToken,official_email:email,
-      name_arabic:document.querySelector('#regNameAr').value.trim(),name_english:document.querySelector('#regNameEn').value.trim(),
-      department:document.querySelector('#regDept').value.trim(),staff_category:document.querySelector('#regCategory').value,
-      academic_rank_requested:document.querySelector('#regRank').value.trim(),orcid:document.querySelector('#regOrcid').value.trim(),
-      scopus_author_id:document.querySelector('#regScopus').value.trim(),wos_researcher_id:document.querySelector('#regWos').value.trim(),
-      google_scholar_id:document.querySelector('#regScholar').value.trim(),notes:document.querySelector('#regNotes').value.trim()});
-    m.textContent='تم إرسال الطلب للإدارة بنجاح. رقم الطلب: '+d.request_id;m.style.color='#146c43';document.querySelector('#submitRegistration').disabled=true;
-  }catch(e){m.textContent=e.message;m.style.color='#a32d2d'}
+    await publicCall(EMAIL_API,{action:'request_code',email});
+    verifiedAccessEmail=email;
+    m.textContent='تم إرسال رمز تحقق إلى بريدك الرسمي. الرمز صالح لمدة 10 دقائق.';
+    m.style.color='#146c43';
+    document.querySelector('#otpStep').classList.remove('hidden');
+    document.querySelector('#accessOtp').focus();
+  }catch(e){
+    m.textContent=e.message;
+    m.style.color='#a32d2d';
+  }
+}
+document.querySelector('#sendAccessCode').onclick=sendAccessOtp;
+document.querySelector('#resendAccessCode').onclick=sendAccessOtp;
+
+document.querySelector('#verifyAccessCode').onclick=async()=>{
+  const email=(verifiedAccessEmail||document.querySelector('#accessEmail').value.trim().toLowerCase());
+  const code=document.querySelector('#accessOtp').value.trim();
+  const m=document.querySelector('#accessOtpMsg'); m.textContent='';
+  try{
+    const d=await publicCall(EMAIL_API,{action:'verify_code',email,code});
+    if(d.route==='profile'){
+      token=d.session_token;
+      sessionStorage.setItem('portal_session',token);
+      document.querySelector('#loginCard').classList.add('hidden');
+      await load();
+      return;
+    }
+    if(d.route==='registration'){
+      registrationVerificationToken=d.verification_token;
+      verifiedAccessEmail=email;
+      document.querySelector('#loginCard').classList.add('hidden');
+      document.querySelector('#registrationCard').classList.remove('hidden');
+      document.querySelector('#regEmail').value=email;
+      return;
+    }
+    if(d.route==='registration_pending'){
+      document.querySelector('#loginCard').classList.add('hidden');
+      document.querySelector('#pendingRegistrationCard').classList.remove('hidden');
+      document.querySelector('#pendingRequestInfo').textContent='رقم الطلب: '+(d.request_id||'—')+' • الحالة: '+(d.status||'Pending Admin Review');
+      return;
+    }
+    throw new Error('تعذر تحديد مسار الدخول.');
+  }catch(e){
+    m.textContent=e.message;
+    m.style.color='#a32d2d';
+  }
 };
 
-document.querySelector('#loginBtn').onclick=async()=>{
-  const m=document.querySelector('#loginMsg');m.textContent='';
+document.querySelector('#submitRegistration').onclick=async()=>{
+  const m=document.querySelector('#regSubmitMsg');m.textContent='';
+  if(!registrationVerificationToken){
+    m.textContent='يجب التحقق من البريد الرسمي أولًا.';m.style.color='#a32d2d';return;
+  }
   try{
-    const r=await call('login',{email:document.querySelector('#email').value.trim(),access_code:document.querySelector('#code').value.trim()});
-    token=r.session_token;sessionStorage.setItem('portal_session',token);await load();
-  }catch(e){m.textContent=e.message;m.style.color='#a32d2d'}
+    const d=await publicCall(REG_API,{
+      action:'submit_registration',
+      verification_token:registrationVerificationToken,
+      official_email:verifiedAccessEmail,
+      name_arabic:document.querySelector('#regNameAr').value.trim(),
+      name_english:document.querySelector('#regNameEn').value.trim(),
+      department:document.querySelector('#regDept').value.trim(),
+      staff_category:document.querySelector('#regCategory').value,
+      academic_rank_requested:document.querySelector('#regRank').value.trim(),
+      orcid:document.querySelector('#regOrcid').value.trim(),
+      scopus_author_id:document.querySelector('#regScopus').value.trim(),
+      wos_researcher_id:document.querySelector('#regWos').value.trim(),
+      google_scholar_id:document.querySelector('#regScholar').value.trim(),
+      notes:document.querySelector('#regNotes').value.trim()
+    });
+    m.textContent='تم إرسال طلبك للإدارة بنجاح. رقم الطلب: '+d.request_id;
+    m.style.color='#146c43';
+    document.querySelector('#submitRegistration').disabled=true;
+  }catch(e){
+    m.textContent=e.message;
+    m.style.color='#a32d2d';
+  }
 };
+
+document.querySelector('#accessOtp').onkeydown=e=>{if(e.key==='Enter')document.querySelector('#verifyAccessCode').click()};
+document.querySelector('#accessEmail').onkeydown=e=>{if(e.key==='Enter')document.querySelector('#sendAccessCode').click()};
+
 document.querySelector('#logout').onclick=async()=>{try{await call('logout',{session_token:token})}catch{}sessionStorage.removeItem('portal_session');location.reload()};
 document.querySelector('#addManual').onclick=async()=>{
   const m=document.querySelector('#newMsg');
