@@ -44,12 +44,15 @@ th,td{padding:8px;border-bottom:1px solid #e7eee9;text-align:right;vertical-alig
     <div class="card">
       <div class="actions">
         <button id="refreshBtn">تحديث</button>
+        <button id="exportFullBtn">تصدير Excel كامل</button>
+        <button id="exportChangesBtn" class="secondary">تصدير التغييرات فقط</button>
         <button id="showDashboard" class="secondary">الملخص</button>
         <button id="showRequests" class="secondary">طلبات المراجعة</button>
         <button id="showResearchers" class="secondary">الباحثون</button>
         <button id="logoutBtn" class="danger">خروج</button>
       </div>
     </div>
+    <div id="exportMsg" class="card hidden"></div>
 
     <div id="dashboardView">
       <div class="card">
@@ -91,6 +94,7 @@ th,td{padding:8px;border-bottom:1px solid #e7eee9;text-align:right;vertical-alig
 
 <script>
 const API='https://xaddbgzrnhaixkqrotkz.supabase.co/functions/v1/admin-api';
+const EXPORT_API='https://xaddbgzrnhaixkqrotkz.supabase.co/functions/v1/admin-export';
 let token=sessionStorage.getItem('asu_admin_session')||'';
 
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -207,6 +211,39 @@ async function reviewDecision(kind,id,decision){
   await call('review_researcher_decision',{kind,id,decision});
   alert('تم التنفيذ');
 }
+
+async function exportExcel(mode){
+  const box=document.getElementById('exportMsg');
+  box.classList.remove('hidden');
+  box.className='card';
+  box.textContent = mode==='full' ? 'جاري إعداد النسخة الكاملة من قاعدة البيانات...' : 'جاري إعداد ملف التغييرات...';
+  try{
+    const r=await fetch(EXPORT_API,{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({session_token:token,mode})
+    });
+    if(!r.ok){
+      const j=await r.json().catch(()=>({}));
+      throw new Error(j.error||'Export failed');
+    }
+    const blob=await r.blob();
+    const cd=r.headers.get('content-disposition')||'';
+    const m=cd.match(/filename="([^"]+)"/i);
+    const filename=m?m[1]:(mode==='full'?'ASU_Agriculture_Research_DB_FULL.xlsx':'ASU_Agriculture_Research_DB_CHANGES.xlsx');
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),30000);
+    box.textContent='تم إنشاء ملف Excel وتنزيله بنجاح: '+filename;
+    box.className='card ok';
+    setTimeout(()=>loadDashboard(),500);
+  }catch(e){
+    box.textContent='تعذر التصدير: '+e.message;
+    box.className='card err';
+  }
+}
+
 async function restore(){
   if(!token) return;
   try{
@@ -221,6 +258,8 @@ async function restore(){
 }
 document.getElementById('loginBtn').onclick=login;
 document.getElementById('refreshBtn').onclick=()=>loadDashboard();
+document.getElementById('exportFullBtn').onclick=()=>exportExcel('full');
+document.getElementById('exportChangesBtn').onclick=()=>exportExcel('changes');
 document.getElementById('showDashboard').onclick=()=>loadDashboard();
 document.getElementById('showRequests').onclick=()=>loadRequests();
 document.getElementById('showResearchers').onclick=()=>{show('researchersView');searchResearchers()};
