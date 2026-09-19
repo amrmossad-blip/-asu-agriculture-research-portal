@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>لوحة إدارة قاعدة أبحاث كلية الزراعة</title>
+<style>
+:root{font-family:Tahoma,Arial,sans-serif;background:#f5f8f6;color:#163529}
+*{box-sizing:border-box} body{margin:0} .wrap{max-width:1200px;margin:auto;padding:18px}
+.brand{background:#174c32;color:white;padding:20px;border-radius:16px;margin-bottom:14px}
+.card{background:white;border:1px solid #dce8df;border-radius:14px;padding:16px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.stat{background:#f7faf8;border:1px solid #dce8df;border-radius:12px;padding:14px}
+.stat b{font-size:24px;display:block}.muted{color:#667970}.small{font-size:12px}.ltr{direction:ltr;text-align:left}
+input,select,textarea,button{font:inherit} input,select,textarea{width:100%;padding:10px;border:1px solid #bfd0c5;border-radius:9px}
+button{border:1px solid #1f6e43;background:#1f6e43;color:#fff;padding:9px 13px;border-radius:9px;cursor:pointer}
+button.secondary{background:#fff;color:#1f6e43}.danger{background:#fff;color:#9b2f2f;border-color:#d6a0a0}
+.hidden{display:none}.row{border:1px solid #dce8df;border-radius:10px;padding:12px;margin:8px 0}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:#e8f2ec;font-size:12px}
+.pending{background:#fff3cd}.ok{color:#146c43}.err{color:#a32d2d}
+h1,h2,h3{margin:.25em 0}.tablewrap{overflow:auto} table{width:100%;border-collapse:collapse}
+th,td{padding:8px;border-bottom:1px solid #e7eee9;text-align:right;vertical-align:top}
+@media(max-width:700px){.wrap{padding:10px}.brand{padding:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <h1>كلية الزراعة – جامعة عين شمس</h1>
+    <div>لوحة إدارة قاعدة بيانات الأبحاث</div>
+    <div class="small" style="opacity:.85;margin-top:5px">Admin Dashboard – Pilot</div>
+  </div>
+
+  <div id="login" class="card">
+    <h2>دخول المسؤول</h2>
+    <p class="muted">أدخل كود الإدارة. لا يتم تخزين الكود في صفحة الموقع.</p>
+    <input id="adminCode" type="password" placeholder="Admin Code" class="ltr">
+    <button id="loginBtn" style="margin-top:10px">دخول</button>
+    <div id="loginMsg" class="small"></div>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="card">
+      <div class="actions">
+        <button id="refreshBtn">تحديث</button>
+        <button id="showDashboard" class="secondary">الملخص</button>
+        <button id="showRequests" class="secondary">طلبات المراجعة</button>
+        <button id="showResearchers" class="secondary">الباحثون</button>
+        <button id="logoutBtn" class="danger">خروج</button>
+      </div>
+    </div>
+
+    <div id="dashboardView">
+      <div class="card">
+        <h2>ملخص المنصة</h2>
+        <div id="stats" class="grid"></div>
+      </div>
+      <div class="card">
+        <h3>آخر الأنشطة</h3>
+        <div id="recent"></div>
+      </div>
+    </div>
+
+    <div id="requestsView" class="hidden">
+      <div class="card">
+        <h2>طلبات التعديل المعلقة</h2>
+        <div id="corrections"></div>
+      </div>
+      <div class="card">
+        <h2>طلبات إضافة أبحاث</h2>
+        <div id="newPubs"></div>
+      </div>
+    </div>
+
+    <div id="researchersView" class="hidden">
+      <div class="card">
+        <h2>البحث عن باحث</h2>
+        <div class="grid">
+          <input id="searchQ" placeholder="الاسم أو البريد أو Researcher ID">
+          <button id="searchBtn">بحث</button>
+        </div>
+        <div id="researcherResults"></div>
+      </div>
+      <div id="detailCard" class="card hidden">
+        <div id="researcherDetail"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API='https://xaddbgzrnhaixkqrotkz.supabase.co/functions/v1/admin-api';
+let token=sessionStorage.getItem('asu_admin_session')||'';
+
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function call(action,data={}){
+  const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action,session_token:token,...data})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.error||'Request failed');
+  return j;
+}
+function show(view){
+  ['dashboardView','requestsView','researchersView'].forEach(x=>document.getElementById(x).classList.add('hidden'));
+  document.getElementById(view).classList.remove('hidden');
+}
+async function login(){
+  const m=document.getElementById('loginMsg'); m.textContent='';
+  try{
+    const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'login',admin_code:document.getElementById('adminCode').value.trim()})});
+    const j=await r.json();
+    if(!r.ok) throw new Error(j.error||'Login failed');
+    token=j.session_token; sessionStorage.setItem('asu_admin_session',token);
+    document.getElementById('login').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    await loadDashboard();
+  }catch(e){m.textContent=e.message;m.className='small err'}
+}
+async function loadDashboard(){
+  show('dashboardView');
+  const d=await call('dashboard');
+  const c=d.counts;
+  const labels=[
+    ['الباحثون',c.researchers],['الأبحاث',c.publications],['الحسابات المفعلة',c.active_pilot],
+    ['تعديلات معلقة',c.pending_corrections],['أبحاث جديدة معلقة',c.pending_new_publications],
+    ['معرفات صحيحة',c.identifier_correct],['معرفات ليست لي',c.identifier_not_mine],
+    ['أبحاث صحيحة',c.publication_correct],['أبحاث ليست لي',c.publication_not_mine]
+  ];
+  document.getElementById('stats').innerHTML=labels.map(x=>`<div class="stat"><span class="muted">${esc(x[0])}</span><b>${esc(x[1])}</b></div>`).join('');
+  document.getElementById('recent').innerHTML=(d.recent||[]).map(x=>`<div class="row"><b>${esc(x.action)}</b> — ${esc(x.actor_ref||'')}<div class="small muted">${esc(new Date(x.created_at).toLocaleString('ar-EG'))}</div></div>`).join('')||'<div class="muted">لا توجد أنشطة.</div>';
+}
+async function loadRequests(){
+  show('requestsView');
+  const d=await call('pending_requests');
+  document.getElementById('corrections').innerHTML=(d.corrections||[]).map(x=>{
+    const r=x.researchers||{};
+    return `<div class="row">
+      <b>${esc(r.name_arabic||r.name_english||x.researcher_id)}</b>
+      <div class="small ltr">${esc(r.official_email||'')}</div>
+      <div><span class="badge">${esc(x.entity_type)}</span> ${esc(x.field_name||'')}</div>
+      <div><b>قديم:</b> ${esc(x.old_value||'—')}</div>
+      <div><b>مقترح:</b> ${esc(x.proposed_value||'—')}</div>
+      <div class="actions">
+        <button onclick="reviewCorrection(${x.id},'Approve')">اعتماد</button>
+        <button class="danger" onclick="reviewCorrection(${x.id},'Reject')">رفض</button>
+      </div>
+    </div>`;
+  }).join('')||'<div class="muted">لا توجد طلبات تعديل معلقة.</div>';
+
+  document.getElementById('newPubs').innerHTML=(d.new_publications||[]).map(x=>{
+    const r=x.researchers||{};
+    return `<div class="row">
+      <b>${esc(x.title||'(ملف يحتاج استخراج)')}</b>
+      <div>${esc(r.name_arabic||r.name_english||x.researcher_id)}</div>
+      <div class="small">${esc(x.publication_year||'')} ${x.doi?' • DOI: '+esc(x.doi):''}</div>
+      <div class="badge pending">${esc(x.status)}</div>
+      <div class="actions">
+        <button onclick="reviewNewPub(${x.id},'Approve')">اعتماد</button>
+        <button class="danger" onclick="reviewNewPub(${x.id},'Reject')">رفض</button>
+      </div>
+    </div>`;
+  }).join('')||'<div class="muted">لا توجد طلبات إضافة أبحاث معلقة.</div>';
+}
+async function reviewCorrection(id,decision){
+  const note=prompt('ملاحظة الإدارة (اختياري):','')||'';
+  if(!confirm(decision==='Approve'?'تأكيد الاعتماد؟':'تأكيد الرفض؟')) return;
+  await call('review_correction',{request_id:id,decision,admin_note:note});
+  await loadRequests(); await loadDashboard();
+}
+async function reviewNewPub(id,decision){
+  const note=prompt('ملاحظة الإدارة (اختياري):','')||'';
+  if(!confirm(decision==='Approve'?'تأكيد اعتماد البحث؟':'تأكيد رفض الطلب؟')) return;
+  try{
+    await call('review_new_publication',{request_id:id,decision,admin_note:note});
+    await loadRequests(); await loadDashboard();
+  }catch(e){alert(e.message)}
+}
+async function searchResearchers(){
+  show('researchersView');
+  const d=await call('search_researchers',{q:document.getElementById('searchQ').value.trim()});
+  document.getElementById('researcherResults').innerHTML=(d.researchers||[]).map(r=>`<div class="row">
+    <b>${esc(r.name_arabic||r.name_english||r.researcher_id)}</b>
+    <div class="ltr small">${esc(r.official_email||'')}</div>
+    <div>${esc(r.researcher_id)} • ${esc(r.academic_rank||'الدرجة غير معتمدة')} • ${esc(r.portal_access_status)}</div>
+    <button onclick="loadResearcher('${esc(r.researcher_id)}')" style="margin-top:7px">عرض الإجابات</button>
+  </div>`).join('')||'<div class="muted">لا توجد نتائج.</div>';
+}
+async function loadResearcher(rid){
+  const d=await call('researcher_detail',{researcher_id:rid}), r=d.researcher||{};
+  const ids=(d.identifiers||[]).map(x=>`<tr><td>${esc(x.identifier_type)}</td><td class="ltr">${esc(x.approved_value||x.source_value||'—')}</td><td>${esc(x.researcher_decision)}</td><td>${esc(x.admin_status)}</td><td>${x.researcher_decision==='Not Mine'?`<button onclick="reviewDecision('identifier',${x.id},'Approve')">اعتماد</button> <button class="danger" onclick="reviewDecision('identifier',${x.id},'Reject')">رفض</button>`:''}</td></tr>`).join('');
+  const pubs=(d.publication_links||[]).map(x=>{const p=x.publications||{};return `<tr><td class="ltr">${esc(p.title||'')}</td><td>${esc(p.publication_year||'')}</td><td>${esc(x.researcher_decision)}</td><td>${esc(x.admin_review||'')}</td><td>${x.researcher_decision==='Not Mine'?`<button onclick="reviewDecision('publication',${x.id},'Approve')">اعتماد</button> <button class="danger" onclick="reviewDecision('publication',${x.id},'Reject')">رفض</button>`:''}</td></tr>`}).join('');
+  document.getElementById('researcherDetail').innerHTML=`
+    <h2>${esc(r.name_arabic||r.name_english||rid)}</h2>
+    <div class="ltr">${esc(r.official_email||'')}</div>
+    <div>${esc(rid)} • ${esc(r.academic_rank||'الدرجة تحتاج اعتماد')}</div>
+    <h3 style="margin-top:18px">المعرفات البحثية</h3>
+    <div class="tablewrap"><table><thead><tr><th>المعرف</th><th>القيمة</th><th>اختيار الباحث</th><th>حالة الإدارة</th><th>إجراء</th></tr></thead><tbody>${ids}</tbody></table></div>
+    <h3 style="margin-top:18px">الأبحاث</h3>
+    <div class="tablewrap"><table><thead><tr><th>العنوان</th><th>السنة</th><th>اختيار الباحث</th><th>مراجعة الإدارة</th><th>إجراء</th></tr></thead><tbody>${pubs}</tbody></table></div>
+    <h3 style="margin-top:18px">طلبات التعديل</h3>
+    ${(d.corrections||[]).map(x=>`<div class="row">${esc(x.field_name||'')} → ${esc(x.proposed_value||'')} <span class="badge">${esc(x.status)}</span></div>`).join('')||'<div class="muted">لا توجد.</div>'}
+  `;
+  document.getElementById('detailCard').classList.remove('hidden');
+}
+async function reviewDecision(kind,id,decision){
+  if(!confirm(decision==='Approve'?'تأكيد اعتماد اختيار الباحث؟':'رفض الاختيار وإعادته إلى Pending؟')) return;
+  await call('review_researcher_decision',{kind,id,decision});
+  alert('تم التنفيذ');
+}
+async function restore(){
+  if(!token) return;
+  try{
+    document.getElementById('login').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    await loadDashboard();
+  }catch(e){
+    sessionStorage.removeItem('asu_admin_session'); token='';
+    document.getElementById('login').classList.remove('hidden');
+    document.getElementById('app').classList.add('hidden');
+  }
+}
+document.getElementById('loginBtn').onclick=login;
+document.getElementById('refreshBtn').onclick=()=>loadDashboard();
+document.getElementById('showDashboard').onclick=()=>loadDashboard();
+document.getElementById('showRequests').onclick=()=>loadRequests();
+document.getElementById('showResearchers').onclick=()=>{show('researchersView');searchResearchers()};
+document.getElementById('searchBtn').onclick=searchResearchers;
+document.getElementById('searchQ').onkeydown=e=>{if(e.key==='Enter')searchResearchers()};
+document.getElementById('logoutBtn').onclick=async()=>{try{await call('logout')}catch{} sessionStorage.removeItem('asu_admin_session');location.reload()};
+restore();
+</script>
+</body>
+</html>
