@@ -126,9 +126,11 @@ async function loadDashboard(){
   const c=d.counts;
   const labels=[
     ['الباحثون',c.researchers],['الأبحاث',c.publications],['الحسابات المفعلة',c.active_pilot],
-    ['تعديلات معلقة',c.pending_corrections],['أبحاث جديدة معلقة',c.pending_new_publications],
-    ['معرفات صحيحة',c.identifier_correct],['معرفات ليست لي',c.identifier_not_mine],
-    ['أبحاث صحيحة',c.publication_correct],['أبحاث ليست لي',c.publication_not_mine]
+    ['مرشحو أبحاث للمراجعة',c.candidate_publication_links],['مراجعة لم تبدأ',c.review_not_started],
+    ['مراجعة جارية',c.review_in_progress],['مراجعة مكتملة',c.review_completed],
+    ['أكدوا عدم وجود أبحاث',c.no_publications_confirmed],['تعديلات معلقة',c.pending_corrections],
+    ['أبحاث جديدة معلقة',c.pending_new_publications],['أبحاث صحيحة',c.publication_correct],
+    ['أبحاث ليست لي',c.publication_not_mine]
   ];
   document.getElementById('stats').innerHTML=labels.map(x=>`<div class="stat"><span class="muted">${esc(x[0])}</span><b>${esc(x[1])}</b></div>`).join('');
   document.getElementById('recent').innerHTML=(d.recent||[]).map(x=>`<div class="row"><b>${esc(x.action)}</b> — ${esc(x.actor_ref||'')}<div class="small muted">${esc(new Date(x.created_at).toLocaleString('ar-EG'))}</div></div>`).join('')||'<div class="muted">لا توجد أنشطة.</div>';
@@ -186,6 +188,7 @@ async function searchResearchers(){
     <b>${esc(r.name_arabic||r.name_english||r.researcher_id)}</b>
     <div class="ltr small">${esc(r.official_email||'')}</div>
     <div>${esc(r.researcher_id)} • ${esc(r.academic_rank||'الدرجة غير معتمدة')} • ${esc(r.portal_access_status)}</div>
+    <div class="small"><span class="badge">${esc((r.researcher_review_status&&r.researcher_review_status.publication_review_status)||'Not started')}</span></div>
     <button onclick="loadResearcher('${esc(r.researcher_id)}')" style="margin-top:7px">عرض الإجابات</button>
   </div>`).join('')||'<div class="muted">لا توجد نتائج.</div>';
 }
@@ -193,10 +196,14 @@ async function loadResearcher(rid){
   const d=await call('researcher_detail',{researcher_id:rid}), r=d.researcher||{};
   const ids=(d.identifiers||[]).map(x=>`<tr><td>${esc(x.identifier_type)}</td><td class="ltr">${esc(x.approved_value||x.source_value||'—')}</td><td>${esc(x.researcher_decision)}</td><td>${esc(x.admin_status)}</td><td>${x.researcher_decision==='Not Mine'?`<button onclick="reviewDecision('identifier',${x.id},'Approve')">اعتماد</button> <button class="danger" onclick="reviewDecision('identifier',${x.id},'Reject')">رفض</button>`:''}</td></tr>`).join('');
   const pubs=(d.publication_links||[]).map(x=>{const p=x.publications||{};return `<tr><td class="ltr">${esc(p.title||'')}</td><td>${esc(p.publication_year||'')}</td><td>${esc(x.researcher_decision)}</td><td>${esc(x.admin_review||'')}</td><td>${x.researcher_decision==='Not Mine'?`<button onclick="reviewDecision('publication',${x.id},'Approve')">اعتماد</button> <button class="danger" onclick="reviewDecision('publication',${x.id},'Reject')">رفض</button>`:''}</td></tr>`}).join('');
+  const st=d.publication_stats||{total:0,reviewed:0,pending:0,correct:0,not_mine:0};
+  const rs=d.review_status||{};
   document.getElementById('researcherDetail').innerHTML=`
     <h2>${esc(r.name_arabic||r.name_english||rid)}</h2>
     <div class="ltr">${esc(r.official_email||'')}</div>
     <div>${esc(rid)} • ${esc(r.academic_rank||'الدرجة تحتاج اعتماد')}</div>
+    <div class="row"><b>حالة مراجعة الأبحاث:</b> ${esc(rs.publication_review_status||'Not started')}
+    <div class="small">إجمالي ${esc(st.total)} • تمت مراجعة ${esc(st.reviewed)} • متبقي ${esc(st.pending)} • صحيح ${esc(st.correct)} • ليس له ${esc(st.not_mine)}</div></div>
     <h3 style="margin-top:18px">المعرفات البحثية</h3>
     <div class="tablewrap"><table><thead><tr><th>المعرف</th><th>القيمة</th><th>اختيار الباحث</th><th>حالة الإدارة</th><th>إجراء</th></tr></thead><tbody>${ids}</tbody></table></div>
     <h3 style="margin-top:18px">الأبحاث</h3>

@@ -1,23 +1,252 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ASU Agriculture Research Portal</title><style>
-:root{font-family:Arial,Tahoma,sans-serif;color:#17352a;background:#f5f8f6}body{margin:0}.wrap{max-width:980px;margin:auto;padding:20px}.card{background:#fff;border:1px solid #dbe7df;border-radius:16px;padding:20px;margin:14px 0}.brand{background:#174c32;color:#fff;border-radius:16px;padding:22px}.muted{color:#65776f}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}input,textarea,select,button{font:inherit}input,textarea,select{box-sizing:border-box;width:100%;padding:12px;border:1px solid #bfd0c5;border-radius:10px;background:#fff}button{padding:11px 16px;border-radius:10px;border:1px solid #1f6e43;background:#1f6e43;color:#fff;cursor:pointer}.secondary{background:#fff;color:#1f6e43}.danger{background:#fff;color:#9a2f2f;border-color:#d6a0a0}.row{border:1px solid #dbe7df;border-radius:12px;padding:14px;margin:10px 0}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.ltr{direction:ltr;text-align:left}.hidden{display:none}.badge{display:inline-block;padding:4px 9px;border-radius:999px;background:#e8f2ec;font-size:12px}.msg{margin-top:10px;font-size:14px}.top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}h1,h2,h3{margin:.2em 0}.editbox{margin-top:10px;padding:12px;background:#f5f8f6;border-radius:10px}</style></head><body><div class="wrap">
-<div class="brand"><h1>كلية الزراعة – جامعة عين شمس</h1><div>Research Publications Verification Portal</div></div>
-<div id="loginCard" class="card"><h2>الدخول للـPilot</h2><p class="muted">اكتب البريد الجامعي وكود الدعوة الذي أرسلته لك إدارة المنصة.</p><div class="grid"><div><label>البريد الجامعي</label><input id="email" type="email" placeholder="name@agr.asu.edu.eg"></div><div><label>كود الدخول</label><input id="code" type="password"></div></div><button id="loginBtn" style="margin-top:12px">دخول</button><div id="loginMsg" class="msg"></div></div>
-<div id="app" class="hidden">
-<div class="card top"><div><small class="muted">Researcher Profile</small><h2 id="rName">—</h2><div id="rEmail" class="muted ltr">—</div><div id="rRank" class="badge">—</div></div><button id="logout" class="secondary">خروج</button></div>
-<div class="card"><h3>المعرفات البحثية</h3><p class="muted">لكل معرف: صحيح / ليس لي / تعديل.</p><div id="identifiers"></div></div>
-<div class="card"><h3>الأبحاث المرتبطة بملفك</h3><p class="muted">اختيار “ليس لي” يفصل البحث عن ملفك ولا يحذفه من قاعدة المؤسسة.</p><div id="publications"></div></div>
-<div class="card"><h3>إضافة بحث جديد</h3><div class="grid"><div><label>العنوان</label><input id="newTitle"></div><div><label>السنة</label><input id="newYear" type="number" value="2026"></div><div><label>DOI</label><input id="newDoi" class="ltr"></div><div><label>المجلة/المصدر</label><input id="newJournal"></div></div><label>المؤلفون</label><input id="newAuthors" class="ltr"><label>المرجع العلمي الكامل</label><textarea id="newCitation" rows="3" class="ltr"></textarea><button id="addManual" style="margin-top:10px">إرسال البحث للمراجعة</button><hr style="border:0;border-top:1px solid #e1e9e4;margin:20px 0"><h3>أو رفع ملف Word / PDF</h3><p class="muted">يمكن أن يحتوي الملف على بحث واحد أو عدة أبحاث. في نسخة No‑Git Pilot يتم حفظ الملف للمراجعة والاستخراج الإداري.</p><input id="pubFile" type="file" accept=".pdf,.doc,.docx"><button id="uploadFile" style="margin-top:10px">رفع الملف للمراجعة</button><div id="newMsg" class="msg"></div></div>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>منصة أبحاث كلية الزراعة – جامعة عين شمس</title>
+<style>
+:root{font-family:Tahoma,Arial,sans-serif;color:#17352a;background:#f5f8f6}
+*{box-sizing:border-box}body{margin:0}.wrap{max-width:1050px;margin:auto;padding:18px}
+.brand{background:#174c32;color:#fff;border-radius:18px;padding:22px;margin-bottom:14px}
+.card{background:#fff;border:1px solid #dbe7df;border-radius:16px;padding:18px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+input,textarea,button{font:inherit}input,textarea{width:100%;padding:11px;border:1px solid #bfd0c5;border-radius:9px}
+button{padding:10px 14px;border-radius:9px;border:1px solid #1f6e43;background:#1f6e43;color:#fff;cursor:pointer}
+button.secondary{background:#fff;color:#1f6e43}.danger{background:#fff;color:#9a2f2f;border-color:#d6a0a0}
+.hidden{display:none}.muted{color:#667970}.small{font-size:12px}.ltr{direction:ltr;text-align:left}
+.row{border:1px solid #dbe7df;border-radius:12px;padding:14px;margin:10px 0}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.badge{display:inline-block;padding:4px 9px;border-radius:999px;background:#e8f2ec;font-size:12px}
+.badge.pending{background:#fff3cd}.badge.good{background:#dff3e7}.badge.no{background:#f9e4e4}
+.progress{height:11px;background:#e7eee9;border-radius:999px;overflow:hidden;margin:9px 0}
+.progress>div{height:100%;background:#28764b}
+.notice{padding:12px;border-radius:10px;background:#f7faf8;border:1px solid #dce8df}
+.success{background:#e7f5ec;border-color:#b9ddc8}.warning{background:#fff8e1;border-color:#ead49c}
+h1,h2,h3{margin:.25em 0}
+@media(max-width:650px){.wrap{padding:10px}.brand{padding:16px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <h1>كلية الزراعة – جامعة عين شمس</h1>
+    <div>منصة مراجعة وتحديث الإنتاج العلمي</div>
+  </div>
+
+  <div id="loginCard" class="card">
+    <h2>الدخول إلى المنصة</h2>
+    <p class="muted">أدخل البريد الجامعي وكود الدخول الخاص بك.</p>
+    <div class="grid">
+      <div><label>البريد الجامعي</label><input id="email" type="email" placeholder="name@agr.asu.edu.eg" class="ltr"></div>
+      <div><label>كود الدخول</label><input id="code" type="password" class="ltr"></div>
+    </div>
+    <button id="loginBtn" style="margin-top:12px">دخول</button>
+    <div id="loginMsg" class="small"></div>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="card top">
+      <div>
+        <div class="small muted">Researcher Profile</div>
+        <h2 id="rName">—</h2>
+        <div id="rEmail" class="ltr muted">—</div>
+        <div id="rRank" class="badge">—</div>
+      </div>
+      <button id="logout" class="secondary">خروج</button>
+    </div>
+
+    <div class="card">
+      <h3>مراجعة الأبحاث</h3>
+      <div id="reviewStatus" class="notice"></div>
+      <div id="progressWrap" class="hidden">
+        <div class="progress"><div id="progressBar" style="width:0%"></div></div>
+        <div id="progressText" class="small muted"></div>
+      </div>
+      <div id="reviewActions" class="actions"></div>
+    </div>
+
+    <div class="card">
+      <h3>المعرفات البحثية</h3>
+      <p class="muted">راجع كل معرف واختر: صحيح، ليس لي، أو أرسل تعديلًا.</p>
+      <div id="identifiers"></div>
+    </div>
+
+    <div class="card">
+      <div class="top">
+        <div>
+          <h3>الأبحاث المرشحة لملفك</h3>
+          <p class="muted">تظهر هنا كل الأبحاث التي استطاع النظام ربطها أو ترشيحها لك. المطلوب مراجعتها جميعًا.</p>
+        </div>
+        <div id="pubCount" class="badge">0</div>
+      </div>
+      <div id="publications"></div>
+    </div>
+
+    <div class="card">
+      <h3>إضافة بحث غير موجود</h3>
+      <p class="muted">إذا كان لديك بحث غير ظاهر في القائمة، أرسله للمراجعة والإضافة.</p>
+      <div class="grid">
+        <div><label>العنوان</label><input id="newTitle"></div>
+        <div><label>السنة</label><input id="newYear" type="number" value="2026"></div>
+        <div><label>DOI</label><input id="newDoi" class="ltr"></div>
+        <div><label>المجلة / المصدر</label><input id="newJournal"></div>
+      </div>
+      <label>المؤلفون</label><input id="newAuthors" class="ltr">
+      <label>المرجع العلمي الكامل</label><textarea id="newCitation" rows="3" class="ltr"></textarea>
+      <button id="addManual" style="margin-top:10px">إرسال البحث للمراجعة</button>
+      <hr style="border:0;border-top:1px solid #e1e9e4;margin:20px 0">
+      <h3>أو رفع Word / PDF</h3>
+      <input id="pubFile" type="file" accept=".pdf,.doc,.docx">
+      <button id="uploadFile" style="margin-top:10px">رفع الملف للمراجعة</button>
+      <div id="newMsg" class="small"></div>
+    </div>
+  </div>
 </div>
-</div><script src="config.js"></script><script>
-const API=()=>window.PORTAL_CONFIG.API_URL;let token=sessionStorage.getItem('portal_session')||'';
-async function call(action,data={}){const r=await fetch(API(),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action,...data})});const j=await r.json();if(!r.ok)throw new Error(j.error||'Request failed');return j}
-const esc=s=>String(s??'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;'}[c]));
-async function load(){if(!token)return;try{const d=await call('profile',{session_token:token});document.querySelector('#loginCard').classList.add('hidden');document.querySelector('#app').classList.remove('hidden');document.querySelector('#rName').textContent=d.researcher.name_arabic||d.researcher.name_english;document.querySelector('#rEmail').textContent=d.researcher.official_email||'';document.querySelector('#rRank').textContent=d.researcher.academic_rank||'الدرجة تحتاج اعتماد';renderIds(d.identifiers);renderPubs(d.publication_links)}catch(e){sessionStorage.removeItem('portal_session');token='';}}
-function renderIds(rows){const box=document.querySelector('#identifiers');box.innerHTML=rows.length?'':'<div class="muted">لا توجد معرفات مسجلة.</div>';rows.forEach(x=>{const d=document.createElement('div');d.className='row';d.innerHTML=`<strong>${esc(x.identifier_type)}</strong><div class="ltr">${esc(x.approved_value||x.source_value||'Not available')}</div><div class="muted">${esc(x.researcher_decision)}</div><div class="actions"><button data-ok>✓ صحيح</button><button class="danger" data-no>✕ ليس لي</button><button class="secondary" data-edit>✎ تعديل</button></div><div class="editbox hidden"><textarea rows="2" data-value placeholder="القيمة الصحيحة / ملاحظة التصحيح"></textarea><button data-send>إرسال التعديل للمراجعة</button></div>`;d.querySelector('[data-ok]').onclick=async()=>{await call('identifier_decision',{session_token:token,identifier_id:x.id,decision:'Correct'});load()};d.querySelector('[data-no]').onclick=async()=>{await call('identifier_decision',{session_token:token,identifier_id:x.id,decision:'Not Mine'});load()};d.querySelector('[data-edit]').onclick=()=>d.querySelector('.editbox').classList.toggle('hidden');d.querySelector('[data-send]').onclick=async()=>{const v=d.querySelector('[data-value]').value.trim();if(!v)return;await call('submit_edit',{session_token:token,entity_type:'identifier',entity_ref:String(x.id),field_name:x.identifier_type,old_value:x.approved_value||x.source_value||'',proposed_value:v});alert('تم إرسال التعديل للمراجعة');};box.appendChild(d)})}
-function renderPubs(rows){const box=document.querySelector('#publications');box.innerHTML=rows.length?'':'<div class="muted">لا توجد أبحاث مرتبطة.</div>';rows.forEach(x=>{const p=x.publications||{};const d=document.createElement('div');d.className='row';d.innerHTML=`<strong class="ltr">${esc(p.title)}</strong><div class="muted">${esc(p.publication_year||'')} • ${esc(p.sources||'')}</div><div class="muted">${esc(x.researcher_decision)}</div><div class="actions"><button data-ok>✓ صحيح</button><button class="danger" data-no>✕ ليس لي</button><button class="secondary" data-edit>✎ تعديل</button></div><div class="editbox hidden"><textarea rows="3" data-value>${esc(p.title)}</textarea><button data-send>إرسال التعديل للمراجعة</button></div>`;d.querySelector('[data-ok]').onclick=async()=>{await call('publication_decision',{session_token:token,link_id:x.id,decision:'Correct'});load()};d.querySelector('[data-no]').onclick=async()=>{await call('publication_decision',{session_token:token,link_id:x.id,decision:'Not Mine'});load()};d.querySelector('[data-edit]').onclick=()=>d.querySelector('.editbox').classList.toggle('hidden');d.querySelector('[data-send]').onclick=async()=>{const v=d.querySelector('[data-value]').value.trim();if(!v)return;await call('submit_edit',{session_token:token,entity_type:'publication',entity_ref:p.publication_id,field_name:'title',old_value:p.title||'',proposed_value:v});alert('تم إرسال التعديل للمراجعة');};box.appendChild(d)})}
-document.querySelector('#loginBtn').onclick=async()=>{const m=document.querySelector('#loginMsg');m.textContent='';try{const r=await call('login',{email:document.querySelector('#email').value.trim(),access_code:document.querySelector('#code').value.trim()});token=r.session_token;sessionStorage.setItem('portal_session',token);load()}catch(e){m.textContent=e.message}};
-document.querySelector('#logout').onclick=()=>{sessionStorage.removeItem('portal_session');location.reload()};
-document.querySelector('#addManual').onclick=async()=>{const m=document.querySelector('#newMsg');try{await call('add_publication_manual',{session_token:token,title:document.querySelector('#newTitle').value.trim(),publication_year:Number(document.querySelector('#newYear').value)||null,doi:document.querySelector('#newDoi').value.trim(),journal_or_source:document.querySelector('#newJournal').value.trim(),authors:document.querySelector('#newAuthors').value.trim(),scientific_citation:document.querySelector('#newCitation').value.trim()});m.textContent='تم إرسال البحث للمراجعة.'}catch(e){m.textContent=e.message}};
-document.querySelector('#uploadFile').onclick=async()=>{const f=document.querySelector('#pubFile').files[0],m=document.querySelector('#newMsg');if(!f){m.textContent='اختر ملفًا أولًا.';return}const fd=new FormData();fd.append('action','upload_publication_file');fd.append('session_token',token);fd.append('file',f);try{const r=await fetch(API(),{method:'POST',body:fd});const j=await r.json();if(!r.ok)throw new Error(j.error||'Upload failed');m.textContent='تم رفع الملف وإرساله للمراجعة.'}catch(e){m.textContent=e.message}};
+
+<script>
+const API='https://xaddbgzrnhaixkqrotkz.supabase.co/functions/v1/portal-api';
+let token=sessionStorage.getItem('portal_session')||'';
+let current=null;
+
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function call(action,data={}){
+  const r=await fetch(API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action,...data})});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(j.error||'Request failed');
+  return j;
+}
+function arDecision(v){
+  return v==='Correct'?'صحيح':v==='Not Mine'?'ليس لي':'قيد المراجعة';
+}
+function decisionBadge(v){
+  return `<span class="badge ${v==='Correct'?'good':v==='Not Mine'?'no':'pending'}">${arDecision(v)}</span>`;
+}
+async function load(){
+  if(!token)return;
+  try{
+    const d=await call('profile',{session_token:token}); current=d;
+    document.querySelector('#loginCard').classList.add('hidden');
+    document.querySelector('#app').classList.remove('hidden');
+    document.querySelector('#rName').textContent=d.researcher.name_arabic||d.researcher.name_english||'';
+    document.querySelector('#rEmail').textContent=d.researcher.official_email||'';
+    document.querySelector('#rRank').textContent=d.researcher.academic_rank||'الدرجة تحتاج اعتماد';
+    renderReview(d); renderIds(d.identifiers||[]); renderPubs(d.publication_links||[]);
+  }catch(e){
+    sessionStorage.removeItem('portal_session');token='';
+    document.querySelector('#loginCard').classList.remove('hidden');
+    document.querySelector('#app').classList.add('hidden');
+  }
+}
+function renderReview(d){
+  const s=d.publication_stats||{total:0,reviewed:0,pending:0,correct:0,not_mine:0};
+  const rs=d.review_status||{};
+  const status=document.querySelector('#reviewStatus');
+  const actions=document.querySelector('#reviewActions');
+  actions.innerHTML='';
+  document.querySelector('#pubCount').textContent=s.total+' بحث';
+  if(s.total>0){
+    document.querySelector('#progressWrap').classList.remove('hidden');
+    const pct=s.total?Math.round((s.reviewed/s.total)*100):0;
+    document.querySelector('#progressBar').style.width=pct+'%';
+    document.querySelector('#progressText').textContent=`تمت مراجعة ${s.reviewed} من ${s.total} بحثًا — المتبقي ${s.pending}`;
+  }else{
+    document.querySelector('#progressWrap').classList.add('hidden');
+  }
+
+  if(rs.publication_review_status==='Completed'){
+    status.className='notice success';
+    status.innerHTML='<b>اكتملت مراجعة أبحاثك.</b><div class="small">يمكنك الاستمرار في إضافة أي بحث مفقود لاحقًا.</div>';
+    return;
+  }
+  if(rs.publication_review_status==='No publications confirmed'){
+    status.className='notice success';
+    status.innerHTML='<b>تم تسجيل إفادتك بعدم وجود أبحاث خاصة بك حتى الآن.</b>';
+    return;
+  }
+  if(s.total===0){
+    status.className='notice warning';
+    status.innerHTML='<b>لم يتم العثور على أبحاث مرتبطة بملفك حتى الآن.</b><div class="small">يمكنك تأكيد عدم وجود أبحاث أو إضافة بحث مفقود من النموذج أسفل الصفحة.</div>';
+    const b=document.createElement('button');b.textContent='أؤكد أنه لا توجد لدي أبحاث حتى الآن';
+    b.onclick=async()=>{if(!confirm('تأكيد عدم وجود أبحاث خاصة بك حتى الآن؟'))return;await call('confirm_no_publications',{session_token:token});await load()};
+    actions.appendChild(b);
+    return;
+  }
+  status.className='notice';
+  status.innerHTML='<b>يرجى مراجعة جميع الأبحاث الظاهرة أدناه.</b><div class="small">الترشيحات الآلية ليست اعتمادًا نهائيًا؛ قرارك هو جزء من عملية التحقق.</div>';
+  if(s.pending===0){
+    if(s.correct===0){
+      const b=document.createElement('button');b.textContent='تأكيد: لا توجد لي أبحاث في القائمة';
+      b.onclick=async()=>{if(!confirm('كل الأبحاث الظاهرة تم تحديدها بأنها ليست لك. هل تؤكد عدم وجود أبحاث تخصك حتى الآن؟'))return;await call('confirm_no_publications',{session_token:token});await load()};
+      actions.appendChild(b);
+    }else{
+      const b=document.createElement('button');b.textContent='إنهاء واعتماد مراجعة الأبحاث';
+      b.onclick=async()=>{if(!confirm('هل انتهيت من مراجعة جميع الأبحاث؟'))return;await call('complete_publication_review',{session_token:token});await load()};
+      actions.appendChild(b);
+    }
+  }
+}
+function renderIds(rows){
+  const box=document.querySelector('#identifiers');
+  box.innerHTML=rows.length?'':'<div class="muted">لا توجد معرفات مسجلة.</div>';
+  rows.forEach(x=>{
+    const d=document.createElement('div');d.className='row';
+    d.innerHTML=`<strong>${esc(x.identifier_type)}</strong>
+      <div class="ltr">${esc(x.approved_value||x.source_value||'غير متاح')}</div>
+      <div style="margin-top:6px">${decisionBadge(x.researcher_decision)}</div>
+      <div class="actions"><button data-ok>✓ صحيح</button><button class="danger" data-no>✕ ليس لي</button><button class="secondary" data-edit>✎ تعديل</button></div>
+      <div class="hidden" data-editbox style="margin-top:10px"><textarea rows="2" data-value placeholder="القيمة الصحيحة"></textarea><button data-send style="margin-top:6px">إرسال التعديل للمراجعة</button></div>`;
+    d.querySelector('[data-ok]').onclick=async()=>{await call('identifier_decision',{session_token:token,identifier_id:x.id,decision:'Correct'});await load()};
+    d.querySelector('[data-no]').onclick=async()=>{await call('identifier_decision',{session_token:token,identifier_id:x.id,decision:'Not Mine'});await load()};
+    d.querySelector('[data-edit]').onclick=()=>d.querySelector('[data-editbox]').classList.toggle('hidden');
+    d.querySelector('[data-send]').onclick=async()=>{const v=d.querySelector('[data-value]').value.trim();if(!v)return;await call('submit_edit',{session_token:token,entity_type:'identifier',entity_ref:String(x.id),field_name:x.identifier_type,old_value:x.approved_value||x.source_value||'',proposed_value:v});alert('تم إرسال التعديل للمراجعة')};
+    box.appendChild(d);
+  });
+}
+function renderPubs(rows){
+  const box=document.querySelector('#publications');
+  rows=[...rows].sort((a,b)=>(b.publications?.publication_year||0)-(a.publications?.publication_year||0)||(a.publications?.title||'').localeCompare(b.publications?.title||''));
+  box.innerHTML=rows.length?'':'<div class="notice warning">لا توجد أبحاث مرشحة حاليًا لهذا الملف.</div>';
+  rows.forEach(x=>{
+    const p=x.publications||{};
+    const cand=(x.machine_status||'').includes('Candidate');
+    const d=document.createElement('div');d.className='row';
+    d.innerHTML=`<div class="top"><strong class="ltr">${esc(p.title||'')}</strong>${decisionBadge(x.researcher_decision)}</div>
+      <div class="muted">${esc(p.publication_year||'')} ${p.journal_or_source?' • '+esc(p.journal_or_source):''}</div>
+      <div class="small muted ltr">${p.doi?'DOI: '+esc(p.doi):''}</div>
+      <div class="small" style="margin-top:5px">${cand?'<span class="badge pending">مرشح للمراجعة</span>':'<span class="badge good">مطابقة قوية</span>'} ${esc(x.match_method||'')}</div>
+      <div class="actions"><button data-ok>✓ يخصني</button><button class="danger" data-no>✕ لا يخصني</button><button class="secondary" data-edit>✎ تعديل العنوان</button></div>
+      <div class="hidden" data-editbox style="margin-top:10px"><textarea rows="3" data-value>${esc(p.title||'')}</textarea><button data-send style="margin-top:6px">إرسال التعديل للمراجعة</button></div>`;
+    d.querySelector('[data-ok]').onclick=async()=>{await call('publication_decision',{session_token:token,link_id:x.id,decision:'Correct'});await load()};
+    d.querySelector('[data-no]').onclick=async()=>{await call('publication_decision',{session_token:token,link_id:x.id,decision:'Not Mine'});await load()};
+    d.querySelector('[data-edit]').onclick=()=>d.querySelector('[data-editbox]').classList.toggle('hidden');
+    d.querySelector('[data-send]').onclick=async()=>{const v=d.querySelector('[data-value]').value.trim();if(!v)return;await call('submit_edit',{session_token:token,entity_type:'publication',entity_ref:p.publication_id,field_name:'title',old_value:p.title||'',proposed_value:v});alert('تم إرسال التعديل للمراجعة')};
+    box.appendChild(d);
+  });
+}
+document.querySelector('#loginBtn').onclick=async()=>{
+  const m=document.querySelector('#loginMsg');m.textContent='';
+  try{
+    const r=await call('login',{email:document.querySelector('#email').value.trim(),access_code:document.querySelector('#code').value.trim()});
+    token=r.session_token;sessionStorage.setItem('portal_session',token);await load();
+  }catch(e){m.textContent=e.message;m.style.color='#a32d2d'}
+};
+document.querySelector('#logout').onclick=async()=>{try{await call('logout',{session_token:token})}catch{}sessionStorage.removeItem('portal_session');location.reload()};
+document.querySelector('#addManual').onclick=async()=>{
+  const m=document.querySelector('#newMsg');
+  try{
+    await call('add_publication_manual',{session_token:token,title:document.querySelector('#newTitle').value.trim(),publication_year:Number(document.querySelector('#newYear').value)||null,doi:document.querySelector('#newDoi').value.trim(),journal_or_source:document.querySelector('#newJournal').value.trim(),authors:document.querySelector('#newAuthors').value.trim(),scientific_citation:document.querySelector('#newCitation').value.trim()});
+    m.textContent='تم إرسال البحث للمراجعة.';m.style.color='#146c43';await load();
+  }catch(e){m.textContent=e.message;m.style.color='#a32d2d'}
+};
+document.querySelector('#uploadFile').onclick=async()=>{
+  const f=document.querySelector('#pubFile').files[0],m=document.querySelector('#newMsg');
+  if(!f){m.textContent='اختر ملفًا أولًا.';return}
+  const fd=new FormData();fd.append('action','upload_publication_file');fd.append('session_token',token);fd.append('file',f);
+  try{const r=await fetch(API,{method:'POST',body:fd});const j=await r.json();if(!r.ok)throw new Error(j.error||'Upload failed');m.textContent='تم رفع الملف وإرساله للمراجعة.';m.style.color='#146c43';await load()}
+  catch(e){m.textContent=e.message;m.style.color='#a32d2d'}
+};
 load();
-</script></body></html>
+</script>
+</body>
+</html>
