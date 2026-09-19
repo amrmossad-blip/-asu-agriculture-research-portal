@@ -48,6 +48,7 @@ th,td{padding:8px;border-bottom:1px solid #e7eee9;text-align:right;vertical-alig
         <button id="exportChangesBtn" class="secondary">تصدير التغييرات فقط</button>
         <button id="showDashboard" class="secondary">الملخص</button>
         <button id="showRequests" class="secondary">طلبات المراجعة</button>
+        <button id="showRegistrations" class="secondary">طلبات تسجيل باحثين</button>
         <button id="showResearchers" class="secondary">الباحثون</button>
         <button id="logoutBtn" class="danger">خروج</button>
       </div>
@@ -76,6 +77,7 @@ th,td{padding:8px;border-bottom:1px solid #e7eee9;text-align:right;vertical-alig
       </div>
     </div>
 
+    <div id="registrationsView" class="hidden"><div class="card"><h2>طلبات تسجيل باحثين جدد</h2><p class="muted">الطلبات المعروضة اجتازت التحقق من البريد الرسمي @agr.asu.edu.eg.</p><div id="registrationRequests"></div></div></div>
     <div id="researchersView" class="hidden">
       <div class="card">
         <h2>البحث عن باحث</h2>
@@ -95,6 +97,7 @@ th,td{padding:8px;border-bottom:1px solid #e7eee9;text-align:right;vertical-alig
 <script>
 const API='https://xaddbgzrnhaixkqrotkz.supabase.co/functions/v1/admin-api';
 const EXPORT_API='https://xaddbgzrnhaixkqrotkz.supabase.co/functions/v1/admin-export';
+const REG_ADMIN_API='https://xaddbgzrnhaixkqrotkz.supabase.co/functions/v1/admin-registration-api';
 let token=sessionStorage.getItem('asu_admin_session')||'';
 
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -104,8 +107,12 @@ async function call(action,data={}){
   if(!r.ok) throw new Error(j.error||'Request failed');
   return j;
 }
+async function regAdminCall(action,data={}){
+  const r=await fetch(REG_ADMIN_API,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action,session_token:token,...data})});
+  const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||'Request failed'); return j;
+}
 function show(view){
-  ['dashboardView','requestsView','researchersView'].forEach(x=>document.getElementById(x).classList.add('hidden'));
+  ['dashboardView','requestsView','registrationsView','researchersView'].forEach(x=>document.getElementById(x).classList.add('hidden'));
   document.getElementById(view).classList.remove('hidden');
 }
 async function login(){
@@ -126,7 +133,7 @@ async function loadDashboard(){
   const c=d.counts;
   const labels=[
     ['الباحثون',c.researchers],['الأبحاث',c.publications],['الحسابات المفعلة',c.active_pilot],
-    ['مرشحو أبحاث للمراجعة',c.candidate_publication_links],['مراجعة لم تبدأ',c.review_not_started],
+    ['مرشحو أبحاث للمراجعة',c.candidate_publication_links],['طلبات تسجيل جديدة',c.pending_registration_requests||0],['مراجعة لم تبدأ',c.review_not_started],
     ['مراجعة جارية',c.review_in_progress],['مراجعة مكتملة',c.review_completed],
     ['أكدوا عدم وجود أبحاث',c.no_publications_confirmed],['تعديلات معلقة',c.pending_corrections],
     ['أبحاث جديدة معلقة',c.pending_new_publications],['أبحاث صحيحة',c.publication_correct],
@@ -251,6 +258,30 @@ async function exportExcel(mode){
   }
 }
 
+
+async function loadRegistrations(){
+  show('registrationsView');
+  const d=await regAdminCall('pending_registrations'),rows=d.requests||[];
+  document.getElementById('registrationRequests').innerHTML=rows.map(x=>`
+    <div class="row">
+      <b>${esc(x.name_arabic||x.name_english||'')}</b>
+      <div class="ltr small">${esc(x.official_email)}</div>
+      <div><b>القسم:</b> ${esc(x.department||'')} • <b>الفئة:</b> ${esc(x.staff_category||'')} • <b>الدرجة:</b> ${esc(x.academic_rank_requested||'')}</div>
+      <div class="small">تحقق البريد: ${x.email_ownership_verified?'✓':'✕'} • النطاق الرسمي: ${x.official_domain_validated?'✓':'✕'}</div>
+      <div class="small ltr">${x.orcid?'ORCID: '+esc(x.orcid)+'<br>':''}${x.scopus_author_id?'Scopus: '+esc(x.scopus_author_id)+'<br>':''}${x.wos_researcher_id?'WoS: '+esc(x.wos_researcher_id)+'<br>':''}${x.google_scholar_id?'Scholar: '+esc(x.google_scholar_id):''}</div>
+      <div class="actions"><button onclick="reviewRegistration(${x.id},'Approve')">اعتماد وإنشاء الباحث</button><button class="danger" onclick="reviewRegistration(${x.id},'Reject')">رفض</button></div>
+    </div>`).join('')||'<div class="muted">لا توجد طلبات تسجيل معلقة.</div>';
+}
+async function reviewRegistration(id,decision){
+  const note=prompt('ملاحظة الإدارة (اختياري):','')||'';
+  if(!confirm(decision==='Approve'?'سيتم إنشاء الباحث وتفعيل حسابه. هل تؤكد؟':'هل تؤكد رفض الطلب؟'))return;
+  try{
+    const d=await regAdminCall('review_registration',{request_id:id,decision,admin_note:note});
+    alert(decision==='Approve'?'تم إنشاء الباحث: '+d.researcher_id:'تم رفض الطلب.');
+    await loadRegistrations();
+  }catch(e){alert(e.message)}
+}
+
 async function restore(){
   if(!token) return;
   try{
@@ -269,6 +300,7 @@ document.getElementById('exportFullBtn').onclick=()=>exportExcel('full');
 document.getElementById('exportChangesBtn').onclick=()=>exportExcel('changes');
 document.getElementById('showDashboard').onclick=()=>loadDashboard();
 document.getElementById('showRequests').onclick=()=>loadRequests();
+document.getElementById('showRegistrations').onclick=()=>loadRegistrations();
 document.getElementById('showResearchers').onclick=()=>{show('researchersView');searchResearchers()};
 document.getElementById('searchBtn').onclick=searchResearchers;
 document.getElementById('searchQ').onkeydown=e=>{if(e.key==='Enter')searchResearchers()};

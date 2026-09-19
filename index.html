@@ -43,6 +43,46 @@ h1,h2,h3{margin:.25em 0}
     </div>
     <button id="loginBtn" style="margin-top:12px">دخول</button>
     <div id="loginMsg" class="small"></div>
+    <div class="actions" style="margin-top:12px">
+      <button id="openRegistration" class="secondary">اسمي غير موجود في قاعدة البيانات</button>
+    </div>
+    <div class="small muted" style="margin-top:8px">التسجيل الجديد متاح فقط ببريد ينتهي بـ @agr.asu.edu.eg.</div>
+  </div>
+
+  <div id="registrationCard" class="card hidden">
+    <div class="top">
+      <div><h2>طلب إضافة باحث جديد</h2><p class="muted">تحقق أولًا من ملكية بريد كلية الزراعة الرسمي.</p></div>
+      <button id="closeRegistration" class="secondary">عودة</button>
+    </div>
+    <div id="regStep1">
+      <label>البريد الرسمي</label>
+      <input id="regEmail" type="email" placeholder="name@agr.asu.edu.eg" class="ltr">
+      <button id="sendRegCode" style="margin-top:10px">إرسال رمز التحقق</button>
+      <div id="regEmailMsg" class="small"></div>
+    </div>
+    <div id="regStep2" class="hidden">
+      <label>رمز التحقق</label>
+      <input id="regOtp" inputmode="numeric" maxlength="6" placeholder="000000" class="ltr">
+      <button id="verifyRegCode" style="margin-top:10px">تحقق من البريد</button>
+      <div id="regOtpMsg" class="small"></div>
+    </div>
+    <div id="regStep3" class="hidden">
+      <div class="notice success"><b>تم التحقق من البريد الرسمي.</b> أكمل البيانات وأرسل الطلب للإدارة.</div>
+      <div class="grid" style="margin-top:12px">
+        <div><label>الاسم بالعربية *</label><input id="regNameAr"></div>
+        <div><label>الاسم بالإنجليزية</label><input id="regNameEn" class="ltr"></div>
+        <div><label>القسم *</label><input id="regDept"></div>
+        <div><label>الفئة *</label><select id="regCategory" style="width:100%;padding:11px;border:1px solid #bfd0c5;border-radius:9px"><option value="Faculty Member">عضو هيئة تدريس</option><option value="Teaching Assistant Staff">هيئة معاونة</option></select></div>
+        <div><label>الدرجة العلمية/الوظيفية *</label><input id="regRank" placeholder="أستاذ / أستاذ مساعد / مدرس / مدرس مساعد / معيد"></div>
+        <div><label>ORCID</label><input id="regOrcid" class="ltr"></div>
+        <div><label>Scopus Author ID</label><input id="regScopus" class="ltr"></div>
+        <div><label>Web of Science ResearcherID</label><input id="regWos" class="ltr"></div>
+        <div><label>Google Scholar</label><input id="regScholar" class="ltr"></div>
+      </div>
+      <label>ملاحظات</label><textarea id="regNotes" rows="3"></textarea>
+      <button id="submitRegistration" style="margin-top:10px">إرسال طلب التسجيل للإدارة</button>
+      <div id="regSubmitMsg" class="small"></div>
+    </div>
   </div>
 
   <div id="app" class="hidden">
@@ -106,6 +146,8 @@ h1,h2,h3{margin:.25em 0}
 
 <script>
 const API='https://xaddbgzrnhaixkqrotkz.supabase.co/functions/v1/portal-api';
+const EMAIL_API='https://xaddbgzrnhaixkqrotkz.supabase.co/functions/v1/portal-email-auth';
+const REG_API='https://xaddbgzrnhaixkqrotkz.supabase.co/functions/v1/registration-api';
 let token=sessionStorage.getItem('portal_session')||'';
 let current=null;
 
@@ -224,6 +266,40 @@ function renderPubs(rows){
     box.appendChild(d);
   });
 }
+
+let registrationVerificationToken='';
+function isFacultyEmail(v){return /^[a-z0-9._%+-]+@agr\.asu\.edu\.eg$/i.test(String(v||'').trim())}
+async function publicCall(url,data){
+  const r=await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(data)});
+  const j=await r.json().catch(()=>({})); if(!r.ok) throw new Error(j.error||'Request failed'); return j;
+}
+document.querySelector('#openRegistration').onclick=()=>{document.querySelector('#loginCard').classList.add('hidden');document.querySelector('#registrationCard').classList.remove('hidden')};
+document.querySelector('#closeRegistration').onclick=()=>{document.querySelector('#registrationCard').classList.add('hidden');document.querySelector('#loginCard').classList.remove('hidden')};
+document.querySelector('#sendRegCode').onclick=async()=>{
+  const email=document.querySelector('#regEmail').value.trim().toLowerCase(),m=document.querySelector('#regEmailMsg');m.textContent='';
+  if(!isFacultyEmail(email)){m.textContent='يجب استخدام بريد رسمي ينتهي بـ @agr.asu.edu.eg';m.style.color='#a32d2d';return}
+  try{await publicCall(EMAIL_API,{action:'request_code',purpose:'registration',email});m.textContent='تم إرسال رمز تحقق إلى بريدك الرسمي.';m.style.color='#146c43';document.querySelector('#regStep2').classList.remove('hidden')}
+  catch(e){m.textContent=e.message;m.style.color='#a32d2d'}
+};
+document.querySelector('#verifyRegCode').onclick=async()=>{
+  const email=document.querySelector('#regEmail').value.trim().toLowerCase(),code=document.querySelector('#regOtp').value.trim(),m=document.querySelector('#regOtpMsg');m.textContent='';
+  try{const d=await publicCall(EMAIL_API,{action:'verify_code',purpose:'registration',email,code});registrationVerificationToken=d.verification_token;m.textContent='تم التحقق من البريد بنجاح.';m.style.color='#146c43';document.querySelector('#regStep3').classList.remove('hidden');document.querySelector('#regEmail').disabled=true;document.querySelector('#regOtp').disabled=true}
+  catch(e){m.textContent=e.message;m.style.color='#a32d2d'}
+};
+document.querySelector('#submitRegistration').onclick=async()=>{
+  const email=document.querySelector('#regEmail').value.trim().toLowerCase(),m=document.querySelector('#regSubmitMsg');m.textContent='';
+  if(!registrationVerificationToken){m.textContent='يجب التحقق من البريد الرسمي أولًا.';m.style.color='#a32d2d';return}
+  try{
+    const d=await publicCall(REG_API,{action:'submit_registration',verification_token:registrationVerificationToken,official_email:email,
+      name_arabic:document.querySelector('#regNameAr').value.trim(),name_english:document.querySelector('#regNameEn').value.trim(),
+      department:document.querySelector('#regDept').value.trim(),staff_category:document.querySelector('#regCategory').value,
+      academic_rank_requested:document.querySelector('#regRank').value.trim(),orcid:document.querySelector('#regOrcid').value.trim(),
+      scopus_author_id:document.querySelector('#regScopus').value.trim(),wos_researcher_id:document.querySelector('#regWos').value.trim(),
+      google_scholar_id:document.querySelector('#regScholar').value.trim(),notes:document.querySelector('#regNotes').value.trim()});
+    m.textContent='تم إرسال الطلب للإدارة بنجاح. رقم الطلب: '+d.request_id;m.style.color='#146c43';document.querySelector('#submitRegistration').disabled=true;
+  }catch(e){m.textContent=e.message;m.style.color='#a32d2d'}
+};
+
 document.querySelector('#loginBtn').onclick=async()=>{
   const m=document.querySelector('#loginMsg');m.textContent='';
   try{
